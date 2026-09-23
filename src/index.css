@@ -1,0 +1,46 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0E0C0A;
+  --surface: #1A1714;
+  --surface2: #221F1B;
+  --border: #2E2A25;
+  --accent: #CC7F5E;
+  --accent-hover: #D9916E;
+  --accent-dim: rgba(204, 127, 94, 0.15);
+  --text: #EDE2CE;
+  --text-muted: #9A8E7E;
+  --text-dim: #5C5449;
+  --danger: #E05555;
+  --success: #6EBF8B;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Jost', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  font-family: 'Jost', system-ui, sans-serif;
+  cursor: pointer;
+}
+
+input[type="number"],
+input[type="text"] {
+  font-family: 'Jost', system-ui, sans-serif;
+}
