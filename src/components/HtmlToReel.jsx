@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
 import { toCanvas } from 'html-to-image'
-import { exportMp4 } from '../lib/exportMp4'
 import './HtmlToReel.css'
 
 const REEL_W = 1080
@@ -27,7 +26,7 @@ async function inlineUrlsInCss(css, base) {
   const map = {}
   await Promise.allSettled(matches.map(async u => {
     if (u.startsWith('data:') || u.startsWith('#')) return
-    try { map[u] = await fetchDataUri(new URL(u, base).href) } catch {}
+    try { map[u] = await fetchDataUri(new URL(u, base).href) } catch { /* best-effort inline, leave original url() on failure */ }
   }))
   return css.replace(/url\(['"]?([^'")\s]+)['"]?\)/g, (m, u) => map[u] ? `url("${map[u]}")` : m)
 }
@@ -62,7 +61,7 @@ async function preprocessHtml(html) {
   // Inline url() refs in <style> tags
   for (const el of [...doc.querySelectorAll('style')]) {
     tasks.push(async () => {
-      try { el.textContent = await inlineUrlsInCss(el.textContent, location.href) } catch {}
+      try { el.textContent = await inlineUrlsInCss(el.textContent, location.href) } catch { /* best-effort inline, leave the <style> as-is on failure */ }
     })
   }
   // Inline <img src>, <source src>, <video src>, <audio src>
@@ -70,7 +69,7 @@ async function preprocessHtml(html) {
     const src = el.getAttribute('src')
     if (!src || src.startsWith('data:') || src.startsWith('blob:')) continue
     tasks.push(async () => {
-      try { el.setAttribute('src', await fetchDataUri(src)) } catch {}
+      try { el.setAttribute('src', await fetchDataUri(src)) } catch { /* best-effort inline, leave the original src on failure */ }
     })
   }
   // Inline inline style url() refs
@@ -78,7 +77,7 @@ async function preprocessHtml(html) {
     const s = el.getAttribute('style')
     if (!s || !s.includes('url(')) continue
     tasks.push(async () => {
-      try { el.setAttribute('style', await inlineUrlsInCss(s, location.href)) } catch {}
+      try { el.setAttribute('style', await inlineUrlsInCss(s, location.href)) } catch { /* best-effort inline, leave the original style on failure */ }
     })
   }
 
@@ -198,7 +197,7 @@ export default function HtmlToReel() {
 
       if (hasCssAnims) {
         // CSS animations: pause and scrub deterministically
-        cssAnims.forEach(a => { try { a.pause() } catch {} })
+        cssAnims.forEach(a => { try { a.pause() } catch { /* animation may already be finished/removed */ } })
       }
 
       for (let i = 0; i < totalFrames; i++) {
@@ -206,7 +205,7 @@ export default function HtmlToReel() {
 
         if (hasCssAnims) {
           // Seek all CSS animations to exact time t
-          cssAnims.forEach(a => { try { a.currentTime = t * 1000 } catch {} })
+          cssAnims.forEach(a => { try { a.currentTime = t * 1000 } catch { /* animation may already be finished/removed */ } })
           await raf()
           await raf()
         } else {
